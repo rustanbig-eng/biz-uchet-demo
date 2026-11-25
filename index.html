@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Учёт финансов для малого бизнеса + автоотчёты в MAX и Telegram</title>
+  <meta name="description" content="Готовая система учёта доходов и расходов в Google Таблицах с ежедневными автоотчётами в MAX и Telegram. Без абонентской платы и VPN." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            navy: {
+              900: '#0F172A',
+              800: '#1E3A5F',
+              700: '#2C4C75',
+            },
+            maxbrand: '#2663EB',
+            tgbrand: '#2AABEE',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+    .tg-wallpaper {
+      background-color: #d9e8d6;
+      background-image: radial-gradient(rgba(64, 117, 79, 0.09) 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .max-wallpaper {
+      background: linear-gradient(180deg, #eff4ff 0%, #f5f7fb 100%);
+    }
+    @keyframes valuePop {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.045); }
+      100% { transform: scale(1); }
+    }
+    .animate-pop {
+      animation: valuePop 260ms ease-out;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .animate-pop { animation: none; }
+      * { transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-navy-900">
+
+  <!-- ВЕРХНЯЯ НАВИГАЦИЯ -->
+  <header class="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+    <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
+      <div class="flex items-center gap-2.5">
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-navy-800 text-white shadow-sm">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+          </svg>
+        </div>
+        <div>
+          <span class="block text-sm font-bold tracking-tight text-slate-900">Бизнес-Учёт</span>
+          <span class="block text-[11px] font-medium text-slate-500">Демо-версия шаблона</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        data-open-modal
+        class="cursor-pointer rounded-xl bg-navy-800 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-navy-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:text-sm"
+      >
+        Получить шаблон
+      </button>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-5xl px-4 pb-24 pt-6 sm:px-6 sm:pt-10">
+
+    <!-- HERO-ШАПКА -->
+    <section class="mb-8 text-center sm:mb-10">
+      <div class="mb-4 inline-flex flex-wrap items-center justify-center gap-2">
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          Работает в РФ без VPN
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
+          На базе Google Таблиц
+        </span>
+      </div>
+
+      <h1 class="mx-auto max-w-3xl text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl">
+        Учёт финансов для малого бизнеса + автоотчёты в MAX и Telegram
+      </h1>
+      <p class="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-600 sm:mt-4 sm:text-lg">
+        Без абонентской платы и сложных CRM. Работает в РФ без VPN
+      </p>
+    </section>
+
+    <!-- ИНТЕРАКТИВНЫЙ СИМУЛЯТОР + ПРЕВЬЮ МЕССЕНДЖЕРА -->
+    <section aria-label="Интерактивный симулятор учёта и превью отчёта" class="mb-12">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+
+        <!-- ЛЕВАЯ КОЛОНКА: СИМУЛЯТОР И ЖИВЫЕ КАРТОЧКИ -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:col-span-7">
+          <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 sm:text-lg">Попробуйте прямо сейчас</h2>
+              <p class="text-xs text-slate-500 sm:text-sm">Добавьте операцию — цифры и отчёт в чате обновятся мгновенно</p>
+            </div>
+            <button
+              id="resetBtn"
+              type="button"
+              class="cursor-pointer rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+            >
+              Сбросить
+            </button>
+          </div>
+
+          <!-- 3 ЖИВЫЕ КАРТОЧКИ KPI -->
+          <div class="mb-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+              <div class="flex items-center justify-between text-xs font-medium text-slate-500">
+                <span>Выручка сегодня</span>
+                <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+                </svg>
+              </div>
+              <div id="kpiRevenue" class="tabular-nums mt-1.5 text-xl font-bold text-slate-900 sm:text-2xl">14 250 ₽</div>
+              <div id="kpiChecks" class="mt-1 text-[11px] font-medium text-slate-500">Чеков: 8 шт.</div>
+            </div>
+
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5">
+              <div class="flex items-center justify-between text-xs font-medium text-slate-500">
+                <span>Расходы</span>
+                <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.286-4.286a11.948 11.948 0 0 1 4.306 6.43l.776 2.898m0 0 3.182-5.511m-3.182 5.51-5.511-3.181" />
+                </svg>
+              </div>
+              <div id="kpiExpense" class="tabular-nums mt-1.5 text-xl font-bold text-slate-900 sm:text-2xl">3 500 ₽</div>
+              <div class="mt-1 text-[11px] font-medium text-slate-500">Закупка и хознужды</div>
+            </div>
+
+            <div id="profitCard" class="rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 transition-colors">
+              <div class="flex items-center justify-between text-xs font-medium text-emerald-800">
+                <span>Чистая прибыль</span>
+                <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </div>
+              <div id="kpiProfit" class="tabular-nums mt-1.5 text-xl font-bold text-emerald-900 sm:text-2xl">10 750 ₽</div>
+              <div id="kpiMargin" class="mt-1 text-[11px] font-semibold text-emerald-700">Маржа сегодня: 75.4%</div>
+            </div>
+          </div>
+
+          <!-- ПАРАМЕТРЫ ТЕСТОВОЙ ОПЕРАЦИИ -->
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 sm:p-4">
+            <div class="mb-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label for="customAmount" class="mb-1 block text-xs font-semibold text-slate-700">
+                  Сумма (₽) — необязательно
+                </label>
+                <input
+                  id="customAmount"
+                  type="number"
+                  min="1"
+                  inputmode="numeric"
+                  placeholder="Пусто = случайная сумма"
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div>
+                <span class="mb-1 block text-xs font-semibold text-slate-700">Способ оплаты (для продажи)</span>
+                <div class="grid grid-cols-3 gap-1.5" role="group" aria-label="Способ оплаты">
+                  <button
+                    type="button"
+                    data-payment="Наличные"
+                    class="payment-pill cursor-pointer rounded-xl border border-slate-300 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:border-navy-800"
+                  >
+                    Наличные
+                  </button>
+                  <button
+                    type="button"
+                    data-payment="Карта"
+                    class="payment-pill cursor-pointer rounded-xl border border-navy-800 bg-navy-800 px-2 py-2 text-xs font-semibold text-white transition"
+                  >
+                    Карта
+                  </button>
+                  <button
+                    type="button"
+                    data-payment="Перевод"
+                    class="payment-pill cursor-pointer rounded-xl border border-slate-300 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:border-navy-800"
+                  >
+                    Перевод
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- ОСНОВНЫЕ КНОПКИ ДЕЙСТВИЙ -->
+            <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+              <button
+                id="addSaleBtn"
+                type="button"
+                class="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              >
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                + Добавить тестовую продажу
+              </button>
+
+              <button
+                id="addExpenseBtn"
+                type="button"
+                class="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+              >
+                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" />
+                </svg>
+                - Добавить расход
+              </button>
+            </div>
+
+            <!-- ЖУРНАЛ ПОСЛЕДНЕГО ДЕЙСТВИЯ -->
+            <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/80 pt-2.5 text-xs text-slate-600">
+              <div id="lastActionBadge" class="font-medium">
+                Нажмите любую кнопку, чтобы увидеть расчёт и обновление отчёта
+              </div>
+              <div id="paymentBreakdownMini" class="tabular-nums text-[11px] text-slate-500">
+                Нал: 3 400 ₽ · Карта: 8 050 ₽ · Перевод: 2 800 ₽
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ПРАВАЯ КОЛОНКА: ПРЕВЬЮ МЕССЕНДЖЕРА (MAX / TELEGRAM) -->
+        <div class="lg:col-span-5">
+          <div class="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+            <div class="mb-3 flex items-center justify-between gap-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Превью отчёта в 21:00</span>
+
+              <!-- ПЕРЕКЛЮЧАТЕЛЬ MAX / TELEGRAM -->
+              <div class="inline-flex rounded-xl bg-slate-100 p-1" role="tablist" aria-label="Выбор мессенджера">
+                <button
+                  id="tabMax"
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  class="cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-maxbrand shadow-sm transition"
+                >
+                  MAX
+                </button>
+                <button
+                  id="tabTg"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  class="cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900"
+                >
+                  Telegram
+                </button>
+              </div>
+            </div>
+
+            <!-- МАКЕТ ЭКРАНА СМАРТФОНА -->
+            <div class="overflow-hidden rounded-[22px] border border-slate-300 shadow-inner">
+              <!-- ШАПКА ЧАТА -->
+              <div id="chatHeader" class="flex items-center justify-between bg-maxbrand px-4 py-2.5 text-white transition-colors duration-200">
+                <div class="flex items-center gap-2.5">
+                  <div id="chatAvatar" class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white">
+                    БУ
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-1.5">
+                      <span id="chatBotName" class="text-sm font-bold leading-none">Бизнес-Учёт Bot</span>
+                      <span id="chatPlatformPill" class="rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold">MAX</span>
+                    </div>
+                    <span class="mt-0.5 block text-[11px] text-white/85">бот · автоотчёт</span>
+                  </div>
+                </div>
+                <span class="text-xs font-medium text-white/80">21:00</span>
+              </div>
+
+              <!-- ТЕЛО ЧАТА -->
+              <div id="chatBody" class="max-wallpaper p-3.5 transition-colors duration-200 sm:p-4">
+                <div class="mb-2.5 text-center">
+                  <span class="inline-block rounded-full bg-slate-900/10 px-2.5 py-0.5 text-[11px] font-medium text-slate-700">
+                    Сегодня
+                  </span>
+                </div>
+
+                <!-- ПУЗЫРЬ СООБЩЕНИЯ -->
+                <div class="max-w-full rounded-2xl rounded-tl-md bg-white p-3.5 text-[13px] leading-relaxed text-slate-800 shadow-sm ring-1 ring-slate-900/5">
+                  <div id="reportPreviewContent" class="tabular-nums space-y-1.5 whitespace-pre-line"></div>
+                  <div class="mt-2 flex items-center justify-end gap-1 text-[10px] text-slate-400">
+                    <span>21:00</span>
+                    <svg id="checkIcon" class="h-3.5 w-3.5 text-maxbrand" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    </svg>
+                  </div>
+                </div>
+
+                <!-- ИНЛАЙН-КНОПКИ БОТА -->
+                <div class="mt-2 grid grid-cols-2 gap-1.5" role="group" aria-label="Кнопки бота в чате">
+                  <button type="button" data-bot-view="report" class="bot-inline-btn cursor-pointer rounded-xl bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 transition hover:bg-white">
+                    📊 Отчёт сейчас
+                  </button>
+                  <button type="button" data-bot-view="yesterday" class="bot-inline-btn cursor-pointer rounded-xl bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 transition hover:bg-white">
+                    📅 Вчера
+                  </button>
+                  <button type="button" data-bot-view="month" class="bot-inline-btn cursor-pointer rounded-xl bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 transition hover:bg-white">
+                    📆 Итоги месяца
+                  </button>
+                  <button type="button" data-bot-view="recent" class="bot-inline-btn cursor-pointer rounded-xl bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 transition hover:bg-white">
+                    🧾 Последние
+                  </button>
+                  <button type="button" data-bot-view="add" class="bot-inline-btn col-span-2 cursor-pointer rounded-xl bg-white/95 px-2.5 py-2 text-xs font-semibold text-slate-800 shadow-sm ring-1 ring-slate-900/10 transition hover:bg-white">
+                    ➕ Внести операцию из чата
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- БЛОК: КОМУ ПОДХОДИТ -->
+    <section class="mb-12">
+      <div class="mb-5 text-center sm:text-left">
+        <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Кому подходит система</h2>
+        <p class="mt-1 text-sm text-slate-600">Идеально для малого бизнеса с ежедневной выручкой и частыми расходами</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-5">
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200">
+          <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-navy-800">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900">ПВЗ (WB, Ozon, ЯМ)</h3>
+          <p class="mt-1 text-xs leading-relaxed text-slate-600">Контроль выплат, допуслуг, аренды и зарплаты операторов без потерь.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200">
+          <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-navy-800">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 1 1-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 0 0 4.486-6.336l-3.276 3.277a3.004 3.004 0 0 1-2.25-2.25l3.276-3.276a4.5 4.5 0 0 0-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437 1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008Z" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900">Автомойки и СТО</h3>
+          <p class="mt-1 text-xs leading-relaxed text-slate-600">Учёт заказ-нарядов по мастерам, налички в кассе и закупки расходников.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200">
+          <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-navy-800">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900">Бьюти-салоны</h3>
+          <p class="mt-1 text-xs leading-relaxed text-slate-600">Выручка по каждому мастеру, учёт материалов, переводов на карту и маржи.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200">
+          <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-navy-800">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900">Кофейни и пекарни</h3>
+          <p class="mt-1 text-xs leading-relaxed text-slate-600">Ежедневная касса, средний чек, закупки молока/зерна и итог смены в 21:00.</p>
+        </article>
+
+        <article class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-200 sm:col-span-2 lg:col-span-1">
+          <div class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-navy-800">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900">Ремонтные бригады</h3>
+          <p class="mt-1 text-xs leading-relaxed text-slate-600">Разделение авансов, чеков на стройматериалы и реальной прибыли по объектам.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- БЛОК: КАК ЭТО РАБОТАЕТ -->
+    <section class="mb-12 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+      <div class="mb-6 text-center">
+        <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Как это работает — всего 3 шага</h2>
+        <p class="mt-1 text-sm text-slate-600">Никаких серверов и ежемесячных подписок — всё хранится в вашем Google Аккаунте</p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div class="relative rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div class="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-navy-800 text-sm font-bold text-white">1</div>
+          <h3 class="text-sm font-bold text-slate-900">Заполняете простую таблицу</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
+            Вы или администратор вносите продажу или расход за 10 секунд с телефона или ПК — с удобными выпадающими списками.
+          </p>
+        </div>
+
+        <div class="relative rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div class="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-navy-800 text-sm font-bold text-white">2</div>
+          <h3 class="text-sm font-bold text-slate-900">Дашборд сам считает прибыль</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
+            Живые формулы мгновенно показывают выручку за день и месяц, маржу, средний чек и разбивку по Наличным / Карте / Переводам.
+          </p>
+        </div>
+
+        <div class="relative rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div class="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-navy-800 text-sm font-bold text-white">3</div>
+          <h3 class="text-sm font-bold text-slate-900">В 21:00 приходит автоотчёт</h3>
+          <p class="mt-1.5 text-xs leading-relaxed text-slate-600">
+            В выбранный час скрипт сам отправляет красивую сводку за день и с начала месяца вам в MAX или Telegram.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ФИНАЛЬНЫЙ ПРИЗЫВ К ДЕЙСТВИЮ -->
+    <section id="get-template" class="rounded-2xl bg-navy-800 px-5 py-8 text-center text-white shadow-md sm:px-10 sm:py-10">
+      <h2 class="text-xl font-bold sm:text-2xl">Готовы навести порядок в финансах за 10 минут?</h2>
+      <p class="mx-auto mt-2 max-w-xl text-sm text-slate-200">
+        Получите готовый файл таблицы, скрипт автосборки и пошаговую инструкцию — или настройку под ваш бизнес «под ключ».
+      </p>
+      <div class="mt-6">
+        <button
+          type="button"
+          data-open-modal
+          class="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-navy-900 shadow-sm transition hover:bg-slate-100 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-navy-800 sm:text-base"
+        >
+          Получить шаблон и настройку
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ПЛАВАЮЩАЯ КНОПКА ВНИЗУ НА МОБИЛЬНЫХ -->
+  <div class="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 p-3 backdrop-blur sm:hidden">
+    <button
+      type="button"
+      data-open-modal
+      class="w-full cursor-pointer rounded-xl bg-navy-800 py-3 text-sm font-bold text-white shadow-sm active:scale-[0.99]"
+    >
+      Получить шаблон и настройку
+    </button>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО КОНТАКТОВ (ЗАГЛУШКИ ДЛЯ БЫСТРОЙ ЗАМЕНЫ) -->
+  <div
+    id="contactModal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+  >
+    <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+      <button
+        id="closeModalBtn"
+        type="button"
+        aria-label="Закрыть окно"
+        class="absolute right-4 top-4 cursor-pointer rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="mb-4">
+        <span class="inline-block rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-navy-800">
+          Быстрая передача и помощь с запуском
+        </span>
+        <h3 id="modalTitle" class="mt-2 text-lg font-bold text-slate-900">Получить шаблон и настройку</h3>
+        <p class="mt-1 text-sm text-slate-600">
+          Напишите в удобный мессенджер или на Авито — отправлю копию таблицы и помогу подключить бота MAX или Telegram.
+        </p>
+      </div>
+
+      <!-- КОНТАКТЫ ПРОДАВЦА -->
+      <div class="space-y-2.5">
+        <a
+          href="https://t.me/rusqwyau"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-tgbrand hover:bg-sky-50"
+        >
+          <span>Написать в Telegram (@rusqwyau)</span>
+          <span class="text-xs font-medium text-sky-600">Открыть →</span>
+        </a>
+
+        <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900">
+          <a
+            href="tel:+79036171771"
+            class="transition hover:text-maxbrand"
+          >
+            MAX / Телефон: +7 (903) 617-17-71
+          </a>
+          <button
+            id="copyPhoneBtn"
+            type="button"
+            class="cursor-pointer shrink-0 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-maxbrand transition hover:border-maxbrand hover:bg-blue-50"
+          >
+            Скопировать
+          </button>
+        </div>
+
+        <!-- Когда опубликуете новое объявление по учёту финансов, при желании замените href на его ссылку -->
+        <a
+          href="https://www.avito.ru/moskva/igry_pristavki_i_programmy/dostup_dlya_iphone_k_zarubezhnym_servisam_i_ii_8608386323"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-emerald-500 hover:bg-emerald-50"
+        >
+          <span>Написать через Авито (объявление продавца)</span>
+          <span class="text-xs font-medium text-emerald-700">Открыть →</span>
+        </a>
+      </div>
+      <!-- /КОНЕЦ БЛОКА КОНТАКТОВ -->
+
+      <p class="mt-4 text-center text-xs text-slate-400">
+        Подключение занимает 5–10 минут по готовой пошаговой инструкции
+      </p>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const INITIAL_STATE = {
+        businessName: 'Кофейня «Бодрое утро»',
+        todayRevenue: 14250,
+        todayExpense: 3500,
+        todayChecks: 8,
+        todayByPayment: {
+          'Наличные': 3400,
+          'Карта': 8050,
+          'Перевод': 2800,
+        },
+        // Накопленный итог до сегодняшнего дня (чтобы месяц красиво рос вместе с сегодняшним днём)
+        prevMonthRevenue: 284300,
+        prevMonthExpense: 89400,
+      };
+
+      const state = structuredCloneState(INITIAL_STATE);
+      let activePayment = 'Карта';
+      let activeMessenger = 'max'; // 'max' | 'tg'
+      let activeBotView = 'report'; // 'report' | 'yesterday' | 'month' | 'recent' | 'add'
+
+      const els = {
+        kpiRevenue: document.getElementById('kpiRevenue'),
+        kpiExpense: document.getElementById('kpiExpense'),
+        kpiProfit: document.getElementById('kpiProfit'),
+        kpiChecks: document.getElementById('kpiChecks'),
+        kpiMargin: document.getElementById('kpiMargin'),
+        profitCard: document.getElementById('profitCard'),
+        customAmount: document.getElementById('customAmount'),
+        lastActionBadge: document.getElementById('lastActionBadge'),
+        paymentBreakdownMini: document.getElementById('paymentBreakdownMini'),
+        reportPreviewContent: document.getElementById('reportPreviewContent'),
+        tabMax: document.getElementById('tabMax'),
+        tabTg: document.getElementById('tabTg'),
+        chatHeader: document.getElementById('chatHeader'),
+        chatBotName: document.getElementById('chatBotName'),
+        chatPlatformPill: document.getElementById('chatPlatformPill'),
+        chatBody: document.getElementById('chatBody'),
+        checkIcon: document.getElementById('checkIcon'),
+        contactModal: document.getElementById('contactModal'),
+        closeModalBtn: document.getElementById('closeModalBtn'),
+      };
+
+      const displayedNumbers = {
+        revenue: state.todayRevenue,
+        expense: state.todayExpense,
+        profit: state.todayRevenue - state.todayExpense,
+      };
+
+      function structuredCloneState(src) {
+        return {
+          businessName: src.businessName,
+          todayRevenue: src.todayRevenue,
+          todayExpense: src.todayExpense,
+          todayChecks: src.todayChecks,
+          todayByPayment: { ...src.todayByPayment },
+          prevMonthRevenue: src.prevMonthRevenue,
+          prevMonthExpense: src.prevMonthExpense,
+        };
+      }
+
+      function formatMoney(num) {
+        const rounded = Math.round(num);
+        const absStr = Math.abs(rounded)
+          .toString()
+          .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        return (rounded < 0 ? '-' : '') + absStr + ' ₽';
+      }
+
+      function formatTodayDate() {
+        const d = new Date();
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return dd + '.' + mm + '.' + yyyy;
+      }
+
+      function animateValue(el, key, targetValue) {
+        const startValue = displayedNumbers[key];
+        const duration = 260;
+        const startTime = performance.now();
+
+        el.classList.remove('animate-pop');
+        void el.offsetWidth;
+        el.classList.add('animate-pop');
+
+        function tick(now) {
+          const progress = Math.min((now - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const current = startValue + (targetValue - startValue) * eased;
+          displayedNumbers[key] = current;
+          el.textContent = formatMoney(current);
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            displayedNumbers[key] = targetValue;
+            el.textContent = formatMoney(targetValue);
+          }
+        }
+        requestAnimationFrame(tick);
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
+      }
+
+      function renderMessengerReport() {
+        const todayProfit = state.todayRevenue - state.todayExpense;
+        const monthRevenue = state.prevMonthRevenue + state.todayRevenue;
+        const monthExpense = state.prevMonthExpense + state.todayExpense;
+        const monthProfit = monthRevenue - monthExpense;
+        const monthMargin = monthRevenue > 0 ? ((monthProfit / monthRevenue) * 100).toFixed(1) : '0.0';
+
+        if (activeBotView === 'yesterday') {
+          els.reportPreviewContent.innerHTML = [
+            '📅 <strong>Сводка за вчера</strong>',
+            '🏢 ' + escapeHtml(state.businessName),
+            '',
+            '💰 Выручка: <strong>22 600 ₽</strong>',
+            '💸 Расходы: <strong>4 800 ₽</strong>',
+            '📈 Чистая прибыль: <strong>17 800 ₽</strong>',
+            '🧾 Чеков: <strong>11 шт.</strong>',
+            '',
+            '💳 <strong>Оплаты за вчера:</strong>',
+            '• Наличные: 6 200 ₽',
+            '• Карта: 16 400 ₽',
+            '• Перевод: 0 ₽',
+          ].join('\n');
+          return;
+        }
+
+        if (activeBotView === 'month') {
+          els.reportPreviewContent.innerHTML = [
+            '📆 <strong>Подробные итоги месяца — ' + escapeHtml(state.businessName) + '</strong>',
+            '',
+            '💰 Выручка: <strong>' + formatMoney(monthRevenue) + '</strong>',
+            '💸 Расходы: <strong>' + formatMoney(monthExpense) + '</strong>',
+            '📈 Чистая прибыль: <strong>' + formatMoney(monthProfit) + '</strong>',
+            '📊 Маржинальность: <strong>' + monthMargin + '%</strong>',
+            '',
+            '💸 <strong>Расходы по категориям:</strong>',
+            '• Закупка: 42 500 ₽',
+            '• Аренда: 28 000 ₽',
+            '• Зарплата: 15 200 ₽',
+            '• Реклама и прочее: ' + formatMoney(Math.max(0, monthExpense - 85700)),
+          ].join('\n');
+          return;
+        }
+
+        if (activeBotView === 'recent') {
+          els.reportPreviewContent.innerHTML = [
+            '🧾 <strong>Последние операции — ' + escapeHtml(state.businessName) + '</strong>',
+            '',
+            '💰 <strong>Доходы:</strong>',
+            '• Сегодня | <strong>+2 800 ₽</strong> (Перевод) — Абонемент на 10 напитков',
+            '• Сегодня | <strong>+5 400 ₽</strong> (Карта) — Кофе-брейк в офис',
+            '• Вчера | <strong>+16 400 ₽</strong> (Карта) — Закрытие терминала',
+            '',
+            '💸 <strong>Расходы:</strong>',
+            '• Сегодня | <strong>-2 150 ₽</strong> (Закупка) — Молоко и сливки',
+            '• Сегодня | <strong>-1 350 ₽</strong> (Прочее) — Стаканчики и крышки',
+          ].join('\n');
+          return;
+        }
+
+        if (activeBotView === 'add') {
+          els.reportPreviewContent.innerHTML = [
+            '➕ <strong>Быстрое добавление прямо из чата</strong>',
+            '',
+            'Отправьте сообщение боту в одну строку:',
+            '• Продажа: <code>+2500 Карта Маникюр</code>',
+            '• Расход: <code>-900 Закупка Стаканчики</code>',
+            '',
+            'Бот сам запишет строку в Google Таблицу и сразу пришлёт обновлённую прибыль за день.',
+          ].join('\n');
+          return;
+        }
+
+        els.reportPreviewContent.innerHTML = [
+          '📊 <strong>Отчёт: ' + escapeHtml(state.businessName) + '</strong>',
+          '📅 Дата: ' + formatTodayDate(),
+          '',
+          '<strong>Итоги за сегодня:</strong>',
+          '💰 Выручка: <strong>' + formatMoney(state.todayRevenue) + '</strong>',
+          '💸 Расходы: <strong>' + formatMoney(state.todayExpense) + '</strong>',
+          '📈 Чистая прибыль: <strong>' + formatMoney(todayProfit) + '</strong>',
+          '🧾 Чеков: <strong>' + state.todayChecks + ' шт.</strong>',
+          '',
+          '💳 <strong>По способам оплаты (сегодня):</strong>',
+          '• Наличные: ' + formatMoney(state.todayByPayment['Наличные']),
+          '• Карта: ' + formatMoney(state.todayByPayment['Карта']),
+          '• Перевод: ' + formatMoney(state.todayByPayment['Перевод']),
+          '',
+          '🗓 <strong>С начала месяца:</strong>',
+          '• Выручка: ' + formatMoney(monthRevenue),
+          '• Расходы: ' + formatMoney(monthExpense),
+          '• Прибыль: <strong>' + formatMoney(monthProfit) + '</strong> (маржа ' + monthMargin + '%)',
+        ].join('\n');
+      }
+
+      function renderUI(animate) {
+        const todayProfit = state.todayRevenue - state.todayExpense;
+        const todayMargin = state.todayRevenue > 0 ? ((todayProfit / state.todayRevenue) * 100).toFixed(1) : '0.0';
+
+        if (animate) {
+          animateValue(els.kpiRevenue, 'revenue', state.todayRevenue);
+          animateValue(els.kpiExpense, 'expense', state.todayExpense);
+          animateValue(els.kpiProfit, 'profit', todayProfit);
+        } else {
+          displayedNumbers.revenue = state.todayRevenue;
+          displayedNumbers.expense = state.todayExpense;
+          displayedNumbers.profit = todayProfit;
+          els.kpiRevenue.textContent = formatMoney(state.todayRevenue);
+          els.kpiExpense.textContent = formatMoney(state.todayExpense);
+          els.kpiProfit.textContent = formatMoney(todayProfit);
+        }
+
+        els.kpiChecks.textContent = 'Чеков: ' + state.todayChecks + ' шт.';
+        els.kpiMargin.textContent = 'Маржа сегодня: ' + todayMargin + '%';
+
+        if (todayProfit >= 0) {
+          els.profitCard.className = 'rounded-xl border border-emerald-200 bg-emerald-50/80 p-3.5 transition-colors';
+          els.kpiProfit.className = 'tabular-nums mt-1.5 text-xl font-bold text-emerald-900 sm:text-2xl';
+          els.kpiMargin.className = 'mt-1 text-[11px] font-semibold text-emerald-700';
+        } else {
+          els.profitCard.className = 'rounded-xl border border-rose-200 bg-rose-50/80 p-3.5 transition-colors';
+          els.kpiProfit.className = 'tabular-nums mt-1.5 text-xl font-bold text-rose-900 sm:text-2xl';
+          els.kpiMargin.className = 'mt-1 text-[11px] font-semibold text-rose-700';
+        }
+
+        els.paymentBreakdownMini.textContent =
+          'Нал: ' + formatMoney(state.todayByPayment['Наличные']) +
+          ' · Карта: ' + formatMoney(state.todayByPayment['Карта']) +
+          ' · Перевод: ' + formatMoney(state.todayByPayment['Перевод']);
+
+        renderMessengerReport();
+      }
+
+      function pickAmount(min, max, step) {
+        const raw = Number(els.customAmount.value);
+        if (Number.isFinite(raw) && raw > 0) {
+          return Math.round(raw);
+        }
+        const steps = Math.floor((max - min) / step);
+        return min + Math.floor(Math.random() * (steps + 1)) * step;
+      }
+
+      function switchMessenger(mode) {
+        activeMessenger = mode;
+        const isMax = mode === 'max';
+
+        els.tabMax.setAttribute('aria-selected', String(isMax));
+        els.tabTg.setAttribute('aria-selected', String(!isMax));
+
+        if (isMax) {
+          els.tabMax.className = 'cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-maxbrand shadow-sm transition';
+          els.tabTg.className = 'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900';
+          els.chatHeader.className = 'flex items-center justify-between bg-maxbrand px-4 py-2.5 text-white transition-colors duration-200';
+          els.chatBody.className = 'max-wallpaper p-3.5 transition-colors duration-200 sm:p-4';
+          els.chatBotName.textContent = 'Бизнес-Учёт Bot';
+          els.chatPlatformPill.textContent = 'MAX';
+          els.checkIcon.classList.remove('text-tgbrand');
+          els.checkIcon.classList.add('text-maxbrand');
+        } else {
+          els.tabTg.className = 'cursor-pointer rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-tgbrand shadow-sm transition';
+          els.tabMax.className = 'cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:text-slate-900';
+          els.chatHeader.className = 'flex items-center justify-between bg-[#517DA2] px-4 py-2.5 text-white transition-colors duration-200';
+          els.chatBody.className = 'tg-wallpaper p-3.5 transition-colors duration-200 sm:p-4';
+          els.chatBotName.textContent = 'FinControl Bot';
+          els.chatPlatformPill.textContent = 'Telegram';
+          els.checkIcon.classList.remove('text-maxbrand');
+          els.checkIcon.classList.add('text-tgbrand');
+        }
+      }
+
+      // Обработчики выбора способа оплаты
+      document.querySelectorAll('.payment-pill').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activePayment = btn.getAttribute('data-payment');
+          document.querySelectorAll('.payment-pill').forEach(function (other) {
+            const selected = other.getAttribute('data-payment') === activePayment;
+            other.className = selected
+              ? 'payment-pill cursor-pointer rounded-xl border border-navy-800 bg-navy-800 px-2 py-2 text-xs font-semibold text-white transition'
+              : 'payment-pill cursor-pointer rounded-xl border border-slate-300 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:border-navy-800';
+          });
+        });
+      });
+
+      document.getElementById('addSaleBtn').addEventListener('click', function () {
+        activeBotView = 'report';
+        const amount = pickAmount(750, 4800, 50);
+        state.todayRevenue += amount;
+        state.todayChecks += 1;
+        state.todayByPayment[activePayment] += amount;
+        els.lastActionBadge.innerHTML =
+          '<span class="text-emerald-700">Добавлена продажа: +' + formatMoney(amount) + ' (' + activePayment + ')</span>';
+        els.customAmount.value = '';
+        renderUI(true);
+      });
+
+      document.getElementById('addExpenseBtn').addEventListener('click', function () {
+        activeBotView = 'report';
+        const amount = pickAmount(400, 2400, 50);
+        state.todayExpense += amount;
+        els.lastActionBadge.innerHTML =
+          '<span class="text-rose-700">Добавлен расход: -' + formatMoney(amount) + '</span>';
+        els.customAmount.value = '';
+        renderUI(true);
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', function () {
+        activeBotView = 'report';
+        Object.assign(state, structuredCloneState(INITIAL_STATE));
+        els.customAmount.value = '';
+        els.lastActionBadge.textContent = 'Демо-данные сброшены к исходным значениям';
+        renderUI(true);
+      });
+
+      document.querySelectorAll('.bot-inline-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          activeBotView = btn.getAttribute('data-bot-view') || 'report';
+          renderMessengerReport();
+        });
+      });
+
+      els.tabMax.addEventListener('click', function () { switchMessenger('max'); });
+      els.tabTg.addEventListener('click', function () { switchMessenger('tg'); });
+
+      // Модальное окно
+      function openModal() {
+        els.contactModal.classList.remove('hidden');
+        els.contactModal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        els.contactModal.classList.add('hidden');
+        els.contactModal.classList.remove('flex');
+        document.body.style.overflow = '';
+      }
+
+      document.querySelectorAll('[data-open-modal]').forEach(function (btn) {
+        btn.addEventListener('click', openModal);
+      });
+      els.closeModalBtn.addEventListener('click', closeModal);
+      els.contactModal.addEventListener('click', function (e) {
+        if (e.target === els.contactModal) closeModal();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !els.contactModal.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+
+      const copyPhoneBtn = document.getElementById('copyPhoneBtn');
+      if (copyPhoneBtn) {
+        copyPhoneBtn.addEventListener('click', function () {
+          const phone = '+79036171771';
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(phone).then(function () {
+              copyPhoneBtn.textContent = 'Скопировано!';
+              setTimeout(function () { copyPhoneBtn.textContent = 'Скопировать'; }, 2000);
+            }).catch(function () {
+              copyPhoneBtn.textContent = phone;
+            });
+          } else {
+            copyPhoneBtn.textContent = phone;
+          }
+        });
+      }
+
+      renderUI(false);
+    })();
+  </script>
+</body>
+</html>
